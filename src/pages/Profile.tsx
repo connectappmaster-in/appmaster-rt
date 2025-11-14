@@ -1,197 +1,258 @@
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Mail, Shield, KeyRound, Activity, Clock } from 'lucide-react';
-import { ChangePasswordDialog } from '@/components/common/ChangePasswordDialog';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Upload, ArrowLeft } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
-export default function Profile() {
-  const { profile } = useAuth();
-  const [showChangePassword, setShowChangePassword] = useState(false);
+const Profile = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  if (!profile) {
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      setUser(user);
+      setEmail(user.email || "");
+
+      // @ts-ignore - types will be regenerated after migration
+      const { data: profile } = await supabase
+        // @ts-ignore
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile) {
+        // @ts-ignore
+        setFullName(profile.full_name || "");
+        // @ts-ignore
+        setAvatarUrl(profile.avatar_url || "");
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      // @ts-ignore - types will be regenerated after migration
+      const { error } = await supabase
+        // @ts-ignore
+        .from("profiles")
+        // @ts-ignore
+        .update({ 
+          full_name: fullName,
+          avatar_url: avatarUrl 
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      if (!user) return;
+
+      setUploading(true);
+      const file = event.target.files[0];
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      setAvatarUrl(publicUrl);
+
+      // @ts-ignore - types will be regenerated after migration
+      await supabase
+        // @ts-ignore
+        .from("profiles")
+        // @ts-ignore
+        .update({ avatar_url: publicUrl })
+        .eq("user_id", user.id);
+
+      toast({
+        title: "Success",
+        description: "Avatar uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload avatar",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'management':
-        return 'default';
-      case 'tech_lead':
-        return 'secondary';
-      default:
-        return 'outline';
+  const getInitials = (name: string, email: string) => {
+    if (name) {
+      return name.substring(0, 2).toUpperCase();
     }
-  };
-
-  const formatRole = (role: string) => {
-    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .slice(0, 2)
-      .join('');
+    return email.substring(0, 2).toUpperCase();
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between h-16 px-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Profile</h1>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-2xl mx-auto py-8 px-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Button>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-12 max-w-3xl">
-          {/* Profile Information Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 text-foreground">
-              <User className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Profile Information</h2>
-            </div>
-            
-            <div className="flex items-start gap-8">
-              {/* Avatar */}
-              <Avatar className="w-24 h-24 border-4 border-primary/10">
-                <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-                  {getInitials(profile.full_name || profile.email)}
-                </AvatarFallback>
-              </Avatar>
-
-              {/* Profile Details */}
-              <div className="flex-1 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-semibold text-foreground">{profile.full_name || 'No name set'}</h3>
-                  <Badge variant={getRoleBadgeVariant(profile.role)} className="mt-3">
-                    {formatRole(profile.role)}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Email</p>
-                      <p className="text-muted-foreground mt-1">{profile.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Shield className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Role</p>
-                      <p className="text-muted-foreground mt-1">{formatRole(profile.role)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Divider */}
-          <div className="border-t border-border"></div>
-
-          {/* Activity Overview Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 text-foreground">
-              <Activity className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Activity Overview</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center flex-shrink-0">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Last Login</p>
-                  <p className="text-muted-foreground mt-1">
-                    {profile.last_login 
-                      ? new Date(profile.last_login).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })
-                      : 'Never'
-                    }
-                  </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+            <CardDescription>
+              Manage your profile information and avatar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={avatarUrl} alt={fullName} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                    {getInitials(fullName, email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex gap-2">
+                  <Label htmlFor="avatar-upload" className="cursor-pointer">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      asChild
+                    >
+                      <span>
+                        {uploading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="mr-2 h-4 w-4" />
+                        )}
+                        Upload Avatar
+                      </span>
+                    </Button>
+                  </Label>
+                  <Input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploading}
+                  />
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center flex-shrink-0">
-                  <User className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Account Status</p>
-                  <p className="text-muted-foreground mt-1 capitalize">
-                    {profile.status || 'Active'}
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                />
               </div>
-            </div>
-          </section>
 
-          {/* Divider */}
-          <div className="border-t border-border"></div>
-
-          {/* Security Settings Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 text-foreground">
-              <KeyRound className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Security Settings</h2>
-            </div>
-
-            <div className="flex items-center justify-between py-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center flex-shrink-0">
-                  <KeyRound className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Password</p>
-                  <p className="text-muted-foreground mt-1">
-                    Update your password to keep your account secure
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Email cannot be changed from this page
+                </p>
               </div>
-              <Button 
-                onClick={() => setShowChangePassword(true)}
-                className="flex-shrink-0"
-              >
-                Change Password
+
+              <Button type="submit" disabled={saving} className="w-full">
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
               </Button>
-            </div>
-          </section>
-
-          {/* Bottom spacing */}
-          <div className="h-8"></div>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Change Password Dialog */}
-      <ChangePasswordDialog 
-        open={showChangePassword} 
-        onOpenChange={setShowChangePassword} 
-      />
     </div>
   );
-}
+};
+
+export default Profile;

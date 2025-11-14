@@ -1,60 +1,134 @@
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Lock, Database, FileText } from "lucide-react";
-import UserAccess from "./user-access";
-import { PageAccess } from "./components/PageAccess";
-import Backup from "./components/Backup";
-import Logs from "./components/Logs";
-
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { AdminSidebar } from "./components/AdminSidebar";
+import { DashboardStats } from "./components/DashboardStats";
+import { UsersManagement } from "./components/UsersManagement";
+import { SubscriptionsManagement } from "./components/SubscriptionsManagement";
+import { BillingManagement } from "./components/BillingManagement";
+import { ToolsAccess } from "./components/ToolsAccess";
+import { AuditLogs } from "./components/AuditLogs";
+import { InsightsDashboard } from "./components/InsightsDashboard";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Menu } from "lucide-react";
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("users");
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    toast
+  } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const activeTab = searchParams.get("tab") || "dashboard";
+  useEffect(() => {
+    checkAuth();
+  }, []);
+  const checkAuth = async () => {
+    try {
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        return;
+      }
 
-  return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <div className="flex-shrink-0 p-6 pb-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
+      // Check if user is admin
+      const {
+        data: roles,
+        error
+      } = await supabase
+      // @ts-ignore - Types will be regenerated after migration
+      .from('user_roles').select('role').eq('user_id', session.user.id);
+      if (error) throw error;
+      const hasAdminRole = roles?.some((r: any) => r.role === 'admin' || r.role === 'super_admin');
+      if (!hasAdminRole) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access the admin panel",
+          variant: "destructive"
+        });
+        navigate("/");
+        return;
+      }
+      setIsAdmin(true);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      navigate("/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>;
+  }
+  if (!isAdmin) {
+    return null;
+  }
+  return <div className="flex min-h-screen bg-background">
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeTab={activeTab} onTabChange={tab => setSearchParams({
+      tab
+    })} />
+      
+      <main className="flex-1 w-full lg:w-auto min-w-0">
+        {/* Mobile header */}
+        <div className="lg:hidden sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border px-3 py-2.5 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="flex-shrink-0 h-8 w-8">
+            <Menu className="h-4 w-4" />
+          </Button>
+          <h1 className="text-base font-semibold text-foreground">
+            Admin Dashboard
+          </h1>
         </div>
-      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden p-6 pt-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto flex-shrink-0">
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            User & Access Management
-          </TabsTrigger>
-          <TabsTrigger value="page-access" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            Page Access
-          </TabsTrigger>
-          <TabsTrigger value="backup" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Backup
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Logs
-          </TabsTrigger>
-        </TabsList>
+        <div className="p-3 sm:p-4 lg:p-6">
+          <div className="max-w-[1400px] mx-auto">
+            {/* Desktop header */}
+            <div className="hidden lg:flex justify-between items-center mb-4">
+              <h1 className="text-xl font-bold text-foreground">
+                Users Management
+              </h1>
+            </div>
 
-        <TabsContent value="users" className="flex-1 overflow-hidden">
-          <UserAccess onBack={() => {}} />
-        </TabsContent>
+            <Tabs value={activeTab} className="space-y-3 lg:space-y-4">
+              <TabsContent value="dashboard" className="mt-0 space-y-3">
+                <DashboardStats />
+              </TabsContent>
 
-        <TabsContent value="page-access" className="flex-1 overflow-hidden">
-          <PageAccess />
-        </TabsContent>
+              <TabsContent value="users" className="mt-0">
+                <UsersManagement />
+              </TabsContent>
 
-        <TabsContent value="backup" className="flex-1 overflow-hidden">
-          <Backup onBack={() => setActiveTab("users")} />
-        </TabsContent>
+              <TabsContent value="subscriptions" className="mt-0">
+                <SubscriptionsManagement />
+              </TabsContent>
 
-        <TabsContent value="logs" className="flex-1 overflow-hidden">
-          <Logs onBack={() => setActiveTab("users")} />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+              <TabsContent value="billing" className="mt-0">
+                <BillingManagement />
+              </TabsContent>
+
+              <TabsContent value="tools" className="mt-0">
+                <ToolsAccess />
+              </TabsContent>
+
+              <TabsContent value="logs" className="mt-0">
+                <AuditLogs />
+              </TabsContent>
+
+              <TabsContent value="insights" className="mt-0">
+                <InsightsDashboard />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </main>
+    </div>;
 };
-
 export default Admin;
