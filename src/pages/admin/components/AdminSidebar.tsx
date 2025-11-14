@@ -50,7 +50,7 @@ export const AdminSidebar = ({ isOpen, onClose, activeTab, onTabChange }: AdminS
       <aside 
         className={cn(
           "fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border z-50 transition-all duration-300 ease-in-out flex flex-col",
-          "w-56 lg:w-52",
+          "w-48 lg:w-44",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
