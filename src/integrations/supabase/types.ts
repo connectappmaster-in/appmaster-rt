@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_transactions: {
         Row: {
           amount: number
@@ -133,6 +171,42 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_rules: {
+        Row: {
+          action: string
+          action_value: Json | null
+          created_at: string
+          execution_order: number | null
+          id: string
+          is_active: boolean | null
+          rule_name: string
+          trigger: string
+          trigger_value: Json | null
+        }
+        Insert: {
+          action: string
+          action_value?: Json | null
+          created_at?: string
+          execution_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          rule_name: string
+          trigger: string
+          trigger_value?: Json | null
+        }
+        Update: {
+          action?: string
+          action_value?: Json | null
+          created_at?: string
+          execution_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          rule_name?: string
+          trigger?: string
+          trigger_value?: Json | null
+        }
+        Relationships: []
+      }
       depreciation_schedules: {
         Row: {
           accumulated_depreciation: number
@@ -186,6 +260,44 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          ticket_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          ticket_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          ticket_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -215,6 +327,184 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      sla_rules: {
+        Row: {
+          created_at: string
+          escalate_if_breached: boolean | null
+          escalate_to_role: string | null
+          first_response_time_minutes: number
+          id: string
+          is_active: boolean | null
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolution_time_minutes: number
+          rule_name: string
+        }
+        Insert: {
+          created_at?: string
+          escalate_if_breached?: boolean | null
+          escalate_to_role?: string | null
+          first_response_time_minutes: number
+          id?: string
+          is_active?: boolean | null
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolution_time_minutes: number
+          rule_name: string
+        }
+        Update: {
+          created_at?: string
+          escalate_if_breached?: boolean | null
+          escalate_to_role?: string | null
+          first_response_time_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolution_time_minutes?: number
+          rule_name?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          color_code: string | null
+          created_at: string
+          description: string | null
+          id: string
+          manager_id: string | null
+          team_name: string
+        }
+        Insert: {
+          color_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
+          team_name: string
+        }
+        Update: {
+          color_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
+          team_name?: string
+        }
+        Relationships: []
+      }
+      ticket_comments: {
+        Row: {
+          author_id: string
+          comment_text: string
+          created_at: string
+          id: string
+          is_public: boolean
+          mentions: Json | null
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          mentions?: Json | null
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          mentions?: Json | null
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          assigned_team: string | null
+          assigned_to: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          custom_fields: Json | null
+          customer_email: string
+          customer_name: string
+          description: string
+          due_date: string | null
+          id: string
+          issue_type: Database["public"]["Enums"]["issue_type"]
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          tags: Json | null
+          ticket_number: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_team?: string | null
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by: string
+          custom_fields?: Json | null
+          customer_email: string
+          customer_name: string
+          description: string
+          due_date?: string | null
+          id?: string
+          issue_type?: Database["public"]["Enums"]["issue_type"]
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: Json | null
+          ticket_number: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_team?: string | null
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          custom_fields?: Json | null
+          customer_email?: string
+          customer_name?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          issue_type?: Database["public"]["Enums"]["issue_type"]
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: Json | null
+          ticket_number?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_team_fkey"
+            columns: ["assigned_team"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -308,11 +598,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_ticket_number: { Args: never; Returns: string }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
     }
     Enums: {
       applicable_law: "Companies Act" | "Income Tax Act" | "Both"
+      availability_status: "Available" | "Busy" | "Away" | "Offline"
       depreciation_method: "SLM" | "WDV"
+      issue_type: "Bug" | "Feature Request" | "Question" | "Urgent" | "General"
+      ticket_priority: "Critical" | "High" | "Medium" | "Low"
+      ticket_status: "Open" | "In Progress" | "Pending" | "Resolved" | "Closed"
       transaction_type: "Addition" | "Disposal"
     }
     CompositeTypes: {
@@ -442,7 +737,11 @@ export const Constants = {
   public: {
     Enums: {
       applicable_law: ["Companies Act", "Income Tax Act", "Both"],
+      availability_status: ["Available", "Busy", "Away", "Offline"],
       depreciation_method: ["SLM", "WDV"],
+      issue_type: ["Bug", "Feature Request", "Question", "Urgent", "General"],
+      ticket_priority: ["Critical", "High", "Medium", "Low"],
+      ticket_status: ["Open", "In Progress", "Pending", "Resolved", "Closed"],
       transaction_type: ["Addition", "Disposal"],
     },
   },
