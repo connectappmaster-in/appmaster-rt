@@ -23,6 +23,7 @@ import Login from "./pages/Login";
 import AuthConfirm from "./pages/AuthConfirm";
 
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import InitializeAdmin from "./pages/InitializeAdmin";
 
 const queryClient = new QueryClient();
@@ -37,7 +38,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/confirm" element={<AuthConfirm />} />
-          <Route path="/profile" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/initialize-admin" element={<InitializeAdmin />} />
           <Route path="/depreciation" element={<Depreciation />} />
