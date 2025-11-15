@@ -27,7 +27,15 @@ export const CreateTicketDialog = ({ onTicketCreated }: { onTicketCreated: () =>
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to create a ticket",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
       // Generate ticket number
       const { data: ticketNumber, error: numberError } = await supabase

@@ -20,20 +20,20 @@ export const TicketFilters = ({
   onPriorityChange,
 }: TicketFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col sm:flex-row gap-2">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder="Search tickets..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
+          className="pl-7 h-8 text-sm"
         />
       </div>
       
       <Select value={statusFilter} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="All Statuses" />
+        <SelectTrigger className="w-full sm:w-[130px] h-8 text-sm">
+          <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Statuses</SelectItem>
@@ -46,8 +46,8 @@ export const TicketFilters = ({
       </Select>
 
       <Select value={priorityFilter} onValueChange={onPriorityChange}>
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="All Priorities" />
+        <SelectTrigger className="w-full sm:w-[130px] h-8 text-sm">
+          <SelectValue placeholder="Priority" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Priorities</SelectItem>

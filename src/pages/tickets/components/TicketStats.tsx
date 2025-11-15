@@ -1,59 +1,51 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Ticket, Clock, AlertCircle, CheckCircle } from "lucide-react";
-
 interface TicketStatsProps {
   totalOpen: number;
   overdue: number;
   resolved: number;
   avgResponseTime: string;
 }
-
-export const TicketStats = ({ totalOpen, overdue, resolved, avgResponseTime }: TicketStatsProps) => {
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-          <Ticket className="h-4 w-4 text-muted-foreground" />
+export const TicketStats = ({
+  totalOpen,
+  overdue,
+  resolved,
+  avgResponseTime
+}: TicketStatsProps) => {
+  return <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+      <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3">
+          <CardTitle className="text-[11px] font-medium text-muted-foreground">Open Tickets</CardTitle>
+          <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalOpen}</div>
-          <p className="text-xs text-muted-foreground">Active support requests</p>
+        <CardContent className="px-3 pb-3">
+          <div className="text-xl font-bold">{totalOpen}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Active support requests</p>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-          <AlertCircle className="h-4 w-4 text-destructive" />
+      <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3">
+          <CardTitle className="text-[11px] font-medium text-muted-foreground">Overdue</CardTitle>
+          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-destructive">{overdue}</div>
-          <p className="text-xs text-muted-foreground">Past due date</p>
+        <CardContent className="px-3 pb-3">
+          <div className="text-xl font-bold text-destructive">{overdue}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Past due date</p>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-          <CheckCircle className="h-4 w-4 text-green-600" />
+      <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3 pt-3">
+          <CardTitle className="text-[11px] font-medium text-muted-foreground">Resolved</CardTitle>
+          <CheckCircle className="h-3.5 w-3.5 text-green-600" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{resolved}</div>
-          <p className="text-xs text-muted-foreground">Successfully closed</p>
+        <CardContent className="px-3 pb-3">
+          <div className="text-xl font-bold">{resolved}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Successfully closed</p>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{avgResponseTime}</div>
-          <p className="text-xs text-muted-foreground">Average time to respond</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+      
+    </div>;
 };

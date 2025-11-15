@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDistanceToNow } from "date-fns";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,9 @@ interface Ticket {
 
 interface TicketListProps {
   tickets: Ticket[];
+  selectedTickets: string[];
+  onSelectTicket: (ticketId: string) => void;
+  onSelectAll: (checked: boolean) => void;
   onViewTicket: (ticketId: string) => void;
 }
 
@@ -45,73 +49,71 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export const TicketList = ({ tickets, onViewTicket }: TicketListProps) => {
+export const TicketList = ({ tickets, selectedTickets, onSelectTicket, onSelectAll, onViewTicket }: TicketListProps) => {
+  const allSelected = tickets.length > 0 && selectedTickets.length === tickets.length;
+  const someSelected = selectedTickets.length > 0 && selectedTickets.length < tickets.length;
+
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border border-border/50 shadow-sm overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Ticket #</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Assigned To</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+          <TableRow className="bg-muted/30 hover:bg-muted/30">
+            <TableHead className="w-10 py-2">
+              <Checkbox checked={allSelected} onCheckedChange={onSelectAll} className={someSelected ? "data-[state=checked]:bg-primary/50" : ""} />
+            </TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Ticket #</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Title</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Customer</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Priority</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Status</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Assigned To</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold">Created</TableHead>
+            <TableHead className="py-2 text-[11px] font-semibold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tickets.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
-                No tickets found
-              </TableCell>
+              <TableCell colSpan={9} className="text-center text-muted-foreground py-8 text-sm">No tickets found</TableCell>
             </TableRow>
           ) : (
-            tickets.map((ticket) => (
-              <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
-                <TableCell className="font-mono text-sm">{ticket.ticket_number}</TableCell>
-                <TableCell className="font-medium max-w-xs truncate">{ticket.title}</TableCell>
-                <TableCell>{ticket.customer_name}</TableCell>
-                <TableCell>
-                  <Badge className={getPriorityColor(ticket.priority)}>
-                    {ticket.priority}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(ticket.status)}>
-                    {ticket.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {ticket.assigned_to ? (
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">
-                          {ticket.profiles?.full_name?.split(' ').map(n => n[0]).join('') || 'NA'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{ticket.profiles?.full_name || 'Unknown'}</span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Unassigned</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewTicket(ticket.id)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
+            tickets.map((ticket) => {
+              const isSelected = selectedTickets.includes(ticket.id);
+              return (
+                <TableRow key={ticket.id} className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-muted/30' : ''}`} onClick={() => onViewTicket(ticket.id)}>
+                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox checked={isSelected} onCheckedChange={() => onSelectTicket(ticket.id)} />
+                  </TableCell>
+                  <TableCell className="font-mono text-[11px] py-2">{ticket.ticket_number}</TableCell>
+                  <TableCell className="font-medium max-w-xs truncate text-sm py-2">{ticket.title}</TableCell>
+                  <TableCell className="text-sm py-2">{ticket.customer_name}</TableCell>
+                  <TableCell className="py-2">
+                    <Badge className={`${getPriorityColor(ticket.priority)} text-[10px] px-1.5 py-0`}>{ticket.priority}</Badge>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <Badge className={`${getStatusColor(ticket.status)} text-[10px] px-1.5 py-0`}>{ticket.status}</Badge>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    {ticket.assigned_to ? (
+                      <div className="flex items-center gap-1.5">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="text-[10px]">{ticket.profiles?.full_name?.split(' ').map(n => n[0]).join('') || 'NA'}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs">{ticket.profiles?.full_name || 'Unknown'}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Unassigned</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground py-2">{formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</TableCell>
+                  <TableCell className="text-right py-2" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewTicket(ticket.id)}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
