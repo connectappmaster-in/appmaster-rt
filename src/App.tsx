@@ -22,7 +22,6 @@ import Admin from "./pages/admin/index";
 import Login from "./pages/Login";
 import AuthConfirm from "./pages/AuthConfirm";
 
-import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import InitializeAdmin from "./pages/InitializeAdmin";
 
@@ -39,7 +38,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/auth/confirm" element={<AuthConfirm />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<Profile />} />
           <Route path="/initialize-admin" element={<InitializeAdmin />} />
           <Route path="/depreciation" element={<Depreciation />} />
           <Route path="/invoicing" element={<Invoicing />} />
