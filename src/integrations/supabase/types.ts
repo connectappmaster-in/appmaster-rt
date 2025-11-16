@@ -366,10 +366,19 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          auto_renew: boolean | null
+          billing_cycle: string | null
+          category: string | null
+          cost: number | null
           created_at: string | null
           id: string
+          notes: string | null
+          payment_method: string | null
+          provider_name: string | null
+          renewal_date: string | null
           status: string
           subscription_end_date: string | null
+          subscription_name: string | null
           subscription_start_date: string | null
           tool_id: string
           trial_days_remaining: number | null
@@ -377,10 +386,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          category?: string | null
+          cost?: number | null
           created_at?: string | null
           id?: string
+          notes?: string | null
+          payment_method?: string | null
+          provider_name?: string | null
+          renewal_date?: string | null
           status?: string
           subscription_end_date?: string | null
+          subscription_name?: string | null
           subscription_start_date?: string | null
           tool_id: string
           trial_days_remaining?: number | null
@@ -388,10 +406,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          category?: string | null
+          cost?: number | null
           created_at?: string | null
           id?: string
+          notes?: string | null
+          payment_method?: string | null
+          provider_name?: string | null
+          renewal_date?: string | null
           status?: string
           subscription_end_date?: string | null
+          subscription_name?: string | null
           subscription_start_date?: string | null
           tool_id?: string
           trial_days_remaining?: number | null
